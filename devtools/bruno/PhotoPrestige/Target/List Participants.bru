@@ -1,0 +1,14 @@
+meta {
+  name: List Participants
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{host}}:{{gateway_port}}/targets/{{target_id}}/participants
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{owner_jwt}}
+}

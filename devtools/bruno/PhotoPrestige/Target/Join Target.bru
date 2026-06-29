@@ -1,0 +1,14 @@
+meta {
+  name: Join Target
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{host}}:{{gateway_port}}/targets/{{target_id}}/participants
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{participant_jwt}}
+}

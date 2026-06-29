@@ -1,0 +1,29 @@
+meta {
+  name: Create Target
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}:{{gateway_port}}/targets
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{owner_jwt}}
+}
+
+body:json {
+  {
+    "title": "Demo Challenge 5 min",
+    "city": "Brussels",
+    "country": "Belgium",
+    "deadline": "2026-06-29T22:13:00.000Z"
+  }
+}
+
+script:post-response {
+  bru.setEnvVar("target_id", res.body.id)
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Upload Target Image
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{host}}:{{gateway_port}}/targets/{{target_id}}/image
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{owner_jwt}}
+}
+
+body:multipart-form {
+  file: @file(/Users/erwingoud/Downloads/target.jpg) @contentType(image/jpeg)
+}

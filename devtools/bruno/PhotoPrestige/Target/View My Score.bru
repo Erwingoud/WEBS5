@@ -1,0 +1,14 @@
+meta {
+  name: View My Score
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{host}}:{{gateway_port}}/targets/{{target_id}}/participants
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{participant_jwt}}
+}

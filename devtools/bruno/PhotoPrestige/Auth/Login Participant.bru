@@ -1,0 +1,26 @@
+meta {
+  name: Login Participant
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{host}}:{{gateway_port}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": {{participant_email}},
+    "password": "IHxWGG3ZHfH3"
+  }
+}
+
+script:post-response {
+  bru.setEnvVar("participant_jwt", res.body.token)
+}

@@ -1,0 +1,14 @@
+meta {
+  name: List Targets By Country
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{host}}:{{gateway_port}}/targets?country=Netherlands
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{participant_jwt}}
+}

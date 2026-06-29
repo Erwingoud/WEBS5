@@ -1,0 +1,19 @@
+meta {
+  name: Upload Participant Image
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{host}}:{{gateway_port}}/targets/{{target_id}}/participants/participant1/image
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{participant_jwt}}
+}
+
+body:multipart-form {
+  file: @file(/Users/erwingoud/Downloads/submission.jpg) @contentType(image/jpeg)
+}

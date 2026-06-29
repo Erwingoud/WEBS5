@@ -1,0 +1,100 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: ./services/gateway/Dockerfile
+    ports:
+      - "8080:80"
+    env_file: gateway.env
+    depends_on:
+      - auth-microservice
+      - target-microservice
+
+  clock-microservice:
+    build:
+      context: .
+      dockerfile: ./services/clock/Dockerfile
+    env_file: clock.env
+    depends_on:
+      mongo:
+        condition: service_started
+      rabbit:
+        condition: service_healthy
+
+  auth-microservice:
+    build:
+      context: .
+      dockerfile: ./services/auth/Dockerfile
+    env_file: auth.env
+    depends_on:
+      mongo:
+        condition: service_started
+      rabbit:
+        condition: service_healthy
+
+  mail-microservice:
+    build:
+      context: .
+      dockerfile: ./services/mail/Dockerfile
+    env_file: mail.env
+    depends_on:
+      rabbit:
+        condition: service_healthy
+
+  score-microservice:
+    build:
+      context: .
+      dockerfile: ./services/score/Dockerfile
+    env_file: score.env
+    depends_on:
+      mongo:
+        condition: service_started
+      rabbit:
+        condition: service_healthy
+
+  target-microservice:
+    build:
+      context: .
+      dockerfile: ./services/target/Dockerfile
+    env_file: target.env
+    depends_on:
+      mongo:
+        condition: service_started
+      rabbit:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      GLIBC_TUNABLES: glibc.cpu.hwcaps=-SHSTK
+    ports:
+      - "27017:27017"
+    volumes:
+      - "./data/mongo:/data/db"
+
+  rabbit:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - "./data/minio:/data"

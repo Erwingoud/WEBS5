@@ -1,0 +1,14 @@
+meta {
+  name: Owner Deletes Participant Upload
+  type: http
+  seq: 15
+}
+
+delete {
+  url: {{host}}:{{gateway_port}}/targets/{{target_id}}/participants/participant1
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{owner_jwt}}
+}

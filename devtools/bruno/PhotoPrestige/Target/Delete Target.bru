@@ -1,0 +1,14 @@
+meta {
+  name: Delete Target
+  type: http
+  seq: 16
+}
+
+delete {
+  url: {{host}}:{{gateway_port}}/targets/{{target_id}}
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{owner_jwt}}
+}

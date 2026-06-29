@@ -1,0 +1,14 @@
+meta {
+  name: List Targets By City
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{host}}:{{gateway_port}}/targets?city=Amsterdam
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{participant_jwt}}
+}

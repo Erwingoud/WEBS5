@@ -1,0 +1,14 @@
+meta {
+  name: List Targets
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{host}}:{{gateway_port}}/targets
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{participant_jwt}}
+}

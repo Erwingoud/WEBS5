@@ -1,0 +1,23 @@
+meta {
+  name: Register Participant
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}:{{gateway_port}}/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": {{participant_email}},
+    "username": "participant1",
+    "role": "participant"
+  }
+}

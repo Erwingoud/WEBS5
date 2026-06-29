@@ -1,0 +1,11 @@
+{
+  "name": "photo-prestiges",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
