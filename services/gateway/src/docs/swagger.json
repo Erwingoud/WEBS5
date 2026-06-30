@@ -1,0 +1,445 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Photo Prestiges API",
+    "version": "1.0.0",
+    "description": "Public API for Photo Prestiges through the API gateway."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Targets" },
+    { "name": "Participants" },
+    { "name": "Images" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "username", "role"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "username": { "type": "string", "minLength": 2, "maxLength": 30 },
+          "role": { "type": "string", "enum": ["owner", "participant"] }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" }
+        }
+      },
+      "PublicUser": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "username": { "type": "string" },
+          "role": { "type": "string", "enum": ["owner", "participant"] },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateTargetRequest": {
+        "type": "object",
+        "required": ["title", "city", "country", "deadline"],
+        "properties": {
+          "title": { "type": "string" },
+          "city": { "type": "string" },
+          "country": { "type": "string" },
+          "deadline": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateTargetResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      },
+      "TargetUpload": {
+        "type": "object",
+        "properties": {
+          "username": { "type": "string" },
+          "imageURL": { "type": "string" },
+          "score": { "type": "number" },
+          "submittedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Target": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "title": { "type": "string" },
+          "city": { "type": "string" },
+          "country": { "type": "string" },
+          "deadline": { "type": "string", "format": "date-time" },
+          "imageURL": { "type": "string" },
+          "uploads": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TargetUpload" }
+          }
+        }
+      },
+      "PagedTargets": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer" },
+          "pageSize": { "type": "integer" },
+          "total": { "type": "integer" },
+          "totalPages": { "type": "integer" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Target" }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User registered" },
+          "400": { "description": "Validation error" },
+          "409": { "description": "Email or username already exists" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login and receive a JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JWT token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current authenticated user",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Current user" },
+          "401": { "description": "Missing or invalid JWT" }
+        }
+      }
+    },
+    "/targets": {
+      "get": {
+        "tags": ["Targets"],
+        "summary": "List targets with optional filters and pagination",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "username", "in": "query", "schema": { "type": "string" } },
+          { "name": "city", "in": "query", "schema": { "type": "string" } },
+          { "name": "country", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20, "maximum": 100 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged target list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PagedTargets" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Targets"],
+        "summary": "Create a target",
+        "description": "Only users with role owner can create targets.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTargetRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Target created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTargetResponse"
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/targets/{id}": {
+      "delete": {
+        "tags": ["Targets"],
+        "summary": "Delete a target",
+        "description": "Only the owner of the target can delete it.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Target deleted" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Target not found" }
+        }
+      }
+    },
+    "/targets/{id}/image": {
+      "put": {
+        "tags": ["Images"],
+        "summary": "Upload target image",
+        "description": "Only the target owner can upload the original target image.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Image uploaded" },
+          "400": { "description": "Missing image or target already has image" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Target not found" }
+        }
+      }
+    },
+    "/targets/{id}/participants": {
+      "get": {
+        "tags": ["Participants"],
+        "summary": "List participants and scores for a target",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Participants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TargetUpload" }
+                }
+              }
+            }
+          },
+          "404": { "description": "Target not found" }
+        }
+      },
+      "post": {
+        "tags": ["Participants"],
+        "summary": "Join a target as participant",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Participant joined target" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Target not found or already closed" },
+          "409": { "description": "Already participating" }
+        }
+      }
+    },
+    "/targets/{id}/participants/{username}": {
+      "delete": {
+        "tags": ["Participants"],
+        "summary": "Delete participant upload",
+        "description": "Participants can delete their own upload. Owners can delete uploads on their own targets.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Participant upload deleted" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Target or participant not found" }
+        }
+      }
+    },
+    "/targets/{id}/participants/{username}/image": {
+      "put": {
+        "tags": ["Images"],
+        "summary": "Upload participant image",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Participant image uploaded and score generation queued"
+          },
+          "400": { "description": "Invalid upload" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Target or participant not found" }
+        }
+      }
+    },
+    "/targets/images/{imageId}": {
+      "get": {
+        "tags": ["Images"],
+        "summary": "View uploaded image",
+        "parameters": [
+          {
+            "name": "imageId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image file",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": { "description": "Image not found" }
+        }
+      }
+    }
+  }
+}
