@@ -17,17 +17,42 @@ export async function getTargets(
   req: Request,
   res: Response,
 ): Promise<Response> {
-  const { username, city, country } = req.query;
+  const { username, city, country, page, pageSize } = req.query;
 
   const filters: Record<string, string> = {};
 
-  if (typeof username === "string") filters.username = username;
-  if (typeof city === "string") filters.city = city;
-  if (typeof country === "string") filters.country = country;
+  if (typeof username === "string") {
+    filters.username = username;
+  }
 
-  const results = await Target.find(filters);
+  if (typeof city === "string") {
+    filters.city = city;
+  }
 
-  return res.json(results.map((target) => target.toPublic()));
+  if (typeof country === "string") {
+    filters.country = country;
+  }
+
+  const currentPage = Math.max(1, Number(page ?? 1));
+  const currentPageSize = Math.min(100, Math.max(1, Number(pageSize ?? 20)));
+
+  const skip = (currentPage - 1) * currentPageSize;
+
+  const [results, total] = await Promise.all([
+    Target.find(filters)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(currentPageSize),
+    Target.countDocuments(filters),
+  ]);
+
+  return res.json({
+    page: currentPage,
+    pageSize: currentPageSize,
+    total,
+    totalPages: Math.ceil(total / currentPageSize),
+    items: results.map((target) => target.toPublic()),
+  });
 }
 
 export async function createTarget(
